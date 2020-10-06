@@ -1,0 +1,7 @@
+**/__pycache__
+###START: python build artifacts
+/build/
+/dist/
+config.py
+.env
+##END: python build artifacts
