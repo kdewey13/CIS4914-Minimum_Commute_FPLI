@@ -15,21 +15,40 @@ circuituity_factor = 2
 slow_commute_speed = 30
 fast_commute_speed = 60
 number_of_minimums_per_disct_pair = 3
-school_levels = ['elementary', 'middle', 'high']
+elementary, middle, high = True, True, True
 api_key = config.distance_key
 path_to_input_file = 'input_data.csv'
 path_to_distance_pairs_file = 'distance_pairs.csv'
 path_to_output_file = ''
 """PARAMETERS: REMOVE WHEN FUNCTION"""
 
-
 print(datetime.datetime.now())
+# get a list of the desired school levels
+school_levels = []
+if elementary:
+    school_levels.append('elementary')
+if middle:
+    school_levels.append('middle')
+if high:
+    school_levels.append('high')
+
 # Create an in-memory database; only exists when program is running
 connection = sqlite3.connect(':memory:')
 
 # Read in the input file and put it in the db
-pandas.read_csv(path_to_input_file).to_sql(name='school_info', con=connection, if_exists='replace', index=True,
-                                           index_label='id')
+input_data = pandas.read_csv(path_to_input_file)
+
+# if not considering all 3 school levels, remove the ones we don't want
+if len(school_levels) != 3:
+    filter_level_by = school_levels[:]
+    if elementary:
+        filter_level_by.extend(['elementary, middle', 'elementary, high'])
+    if middle:
+        filter_level_by.extend(['elementary, middle', 'middle, high'])
+    if high:
+        filter_level_by.extend(['elementary, high', 'middle, high'])
+    input_data = input_data[input_data['level'].isin(filter_level_by)]
+input_data.to_sql(name='school_info', con=connection, if_exists='replace', index=True, index_label='id')
 
 # create a cursor to the school_info table we just created
 if connection is not None:
@@ -55,7 +74,7 @@ for index in range(0, len(cursor.description)):
     elif cursor.description[index][0] == 'district_name':
         district_index = index
 
-# create a table to store the pairs of schools that are less than 100 miles apart
+# create a table to store the pairs of schools that are less than max_radius_to_consider miles apart
 if connection is not None:
     try:
         connection.cursor().execute("CREATE TABLE IF NOT EXISTS straight_line_pairs("
@@ -93,6 +112,8 @@ for school in school_list:  # for each school in the list
 
     # now that we have compared to every school, remove it from the list to avoid duplicate comparisons
     school_list.remove(school)
+
+"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
 print(datetime.datetime.now())
 if connection is not None:
     try:
@@ -108,11 +129,12 @@ if connection is not None:
         wait = 3
     except Error as e:
         print(e)
+"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
 
 # get a list of the districts
 if connection is not None:
     try:
-        districts = list(connection.cursor().execute("SELECT DISTINCT district_name FROM school_info").fetchall())
+        district_list = list(connection.cursor().execute("SELECT DISTINCT district_name FROM school_info").fetchall())
     except Error as e:
         print(e)
 
@@ -124,7 +146,44 @@ if connection is not None:
 # longer than the maximum estimated commute thus, we wish to exclude distances longer than:
 # largest_min_dist*fast_commute_speed*(circuituity_factor/slow_commute_speed) from the accurate commute analysis
 
-for district in districts:
-    for other_district in districts:
+# create a table to store the pairs for which to gather actual commute estimates from API
+if connection is not None:
+    try:
+        connection.cursor().execute("CREATE TABLE IF NOT EXISTS pairs_to_find_commute_between("
+                                    "school_1_id INTEGER NOT NULL, "
+                                    "school_2_id INTEGER NOT NULL, "
+                                    "school_level varchar(255)"
+                                    "KEY(school_1_id, school_2_id), "
+                                    "FOREIGN KEY (school_1_id) REFERENCES school_info (id), "
+                                    "FOREIGN KEY (school_2_id) REFERENCES school_info (id));")
+        connection.commit()
+    except Error as e:
+        print(e)
+
+for district in district_list:
+    for other_district in district_list:
         if district != other_district:
-            for level in school_level:
+            for level in school_levels:
+                if connection is not None:
+                    try:
+                        # get the nth minimum distance (where n = # of desired minimums)
+                        nth_min_dist = connection.cursor().execute(
+                            "SELECT distance_between FROM "
+                            "(SELECT school_2_id, distance_between "
+                            "FROM straight_line_pairs JOIN school_info on school_1_id = id "
+                            "WHERE level LIKE '%{0}%' AND district_name LIKE '{1}') "
+                            "JOIN school_info on school_2_id = id "
+                            "WHERE level LIKE '%{0}%' AND district_name LIKE '{2}' "
+                            "ORDER BY distance_between ASC Limit 1 offset {3}".
+                                format(level, district, other_district,
+                                       number_of_minimums_per_disct_pair - 1)).fetchall()[0][0]
+                        max_dist_to_consider = nth_min_dist*fast_commute_speed*(circuituity_factor/slow_commute_speed)
+
+                        wait = 3
+                    except Error as e:
+                        print(e)
+
+
+
+
+
