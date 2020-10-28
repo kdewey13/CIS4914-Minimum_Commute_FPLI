@@ -109,12 +109,11 @@ for school in school_list:  # for each school in the list
                             connection.commit()
                         except Error as e:
                             print(e)
-
     # now that we have compared to every school, remove it from the list to avoid duplicate comparisons
     school_list.remove(school)
 
 """REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
-print(datetime.datetime.now())
+print("Finished straightline distance {0}".format(datetime.datetime.now()))
 if connection is not None:
     try:
         # save the distance pairs for interim examining
@@ -152,8 +151,8 @@ if connection is not None:
         connection.cursor().execute("CREATE TABLE IF NOT EXISTS pairs_to_find_commute_between("
                                     "school_1_id INTEGER NOT NULL, "
                                     "school_2_id INTEGER NOT NULL, "
-                                    "school_level varchar(255)"
-                                    "KEY(school_1_id, school_2_id), "
+                                    "comparison_level varchar NOT NULL, "
+                                    "PRIMARY KEY(school_1_id, school_2_id, comparison_level), "
                                     "FOREIGN KEY (school_1_id) REFERENCES school_info (id), "
                                     "FOREIGN KEY (school_2_id) REFERENCES school_info (id));")
         connection.commit()
@@ -174,16 +173,57 @@ for district in district_list:
                             "WHERE level LIKE '%{0}%' AND district_name LIKE '{1}') "
                             "JOIN school_info on school_2_id = id "
                             "WHERE level LIKE '%{0}%' AND district_name LIKE '{2}' "
-                            "ORDER BY distance_between ASC Limit 1 offset {3}".
-                                format(level, district, other_district,
-                                       number_of_minimums_per_disct_pair - 1)).fetchall()[0][0]
-                        max_dist_to_consider = nth_min_dist*fast_commute_speed*(circuituity_factor/slow_commute_speed)
-
-                        wait = 3
+                            "ORDER BY distance_between ASC Limit 1 offset {3}".format(
+                                level, district[0], other_district[0],
+                                number_of_minimums_per_disct_pair - 1)).fetchone()
                     except Error as e:
                         print(e)
+                        # as long as a distance was returned, proceed to find the pairs that are reasonable to calculate
+                        # (the above would return 0 items if there are no pairs between the 2 districts)
+                    if nth_min_dist is not None:
+                        max_dist_to_consider = nth_min_dist[0]*fast_commute_speed*\
+                                               (float(circuituity_factor)/slow_commute_speed)
+                        if connection is not None:
+                            try:
+                                connection.cursor().execute("INSERT INTO pairs_to_find_commute_between "
+                                                            "SELECT school_1_id, school_2_id, "
+                                                            "'{0}' as comparison_level "
+                                                            "FROM (SELECT school_1_id, school_2_id, "
+                                                            "distance_between FROM straight_line_pairs "
+                                                            "JOIN school_info on school_1_id = id "
+                                                            "WHERE level LIKE '%{0}%' "
+                                                            "AND district_name LIKE '{1}') "
+                                                            "JOIN school_info on school_2_id = id "
+                                                            "WHERE level LIKE '%{0}%' AND district_name LIKE '{2}' "
+                                                            "AND distance_between < {3} "
+                                                            "ORDER BY distance_between ASC".
+                                                            format(level, district[0], other_district[0],
+                                                                   max_dist_to_consider))
+                            except Error as e:
+                                print(e)
+    # now that we have compared this district to all the others, remove it from the list to avoid duplicates
+    district_list.remove(district)
 
-
-
-
-
+"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
+print("Finished optimization {0}".format(datetime.datetime.now()))
+if connection is not None:
+    try:
+        # save the optimized distance pairs for interim examining
+        pandas.DataFrame(pandas.read_sql_query("SELECT op.school_1_id, op.school_2_id, comparison_level, School_1_Name, "
+                                               "School_1_District, School_2_Name, School_2_District, distance_between "
+                                               "FROM (SELECT school_1_id, school_2_id, comparison_level, School_1_Name, "
+                                               "School_1_District, school_name as 'School_2_Name', "
+                                               "district_name as 'School_2_District' "
+                                               "FROM (SELECT school_1_id, school_2_id, comparison_level, "
+                                               "school_name as 'School_1_Name', "
+                                               "district_name as 'School_1_District' "
+                                               "FROM pairs_to_find_commute_between "
+                                               "JOIN school_info on school_1_id = id) "
+                                               "JOIN school_info on school_2_id = id) AS op "
+                                               "JOIN straight_line_pairs AS slp ON "
+                                               "op.school_1_id = slp.school_1_id AND "
+                                               "op.school_2_id = slp.school_2_id", connection)).\
+            to_csv("optimized_pairs.csv")
+    except Error as e:
+        print(e)
+"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""

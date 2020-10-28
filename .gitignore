@@ -4,4 +4,6 @@
 /dist/
 config.py
 .env
+distance_pairs.csv
+optimized_pairs.csv
 ##END: python build artifacts
