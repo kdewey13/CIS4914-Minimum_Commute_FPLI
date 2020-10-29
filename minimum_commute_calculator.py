@@ -80,7 +80,7 @@ if connection is not None:
         connection.cursor().execute("CREATE TABLE IF NOT EXISTS straight_line_pairs("
                                     "school_1_id INTEGER NOT NULL, "
                                     "school_2_id INTEGER NOT NULL, "
-                                    "distance_between INTEGER NOT NULL, "
+                                    "distance_between FLOAT NOT NULL, "
                                     "PRIMARY KEY(school_1_id, school_2_id), "
                                     "FOREIGN KEY (school_1_id) REFERENCES school_info (id), "
                                     "FOREIGN KEY (school_2_id) REFERENCES school_info (id));")
