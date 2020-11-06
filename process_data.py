@@ -18,8 +18,9 @@ full_data = pandas.read_excel('MSID_all_schools.xlsx')
 # remove all but the columns of interest
 full_data = full_data[['TYPE', 'ACTIVITY_CODE', 'DISTRICT_NAME', 'SCHOOL_NAME_LONG', 'GRADE_CODE',
                        'PHYSICAL_ADDRESS', 'PHYSICAL_CITY', 'PHYSICAL_STATE', 'PHYSICAL_ZIP',
-                       'SCHL_FUNC_SETTING', 'LATITUDE', 'LONGITUDE']]
+                       'SCHL_FUNC_SETTING', 'LATITUDE', 'LONGITUDE', 'CHARTER_SCHL_STAT']]
 # remove all but active schools
+# following syntax filters full_data, only keeping rows w/ ACTIVITY_CODE equal to A
 full_data = full_data[full_data.ACTIVITY_CODE == 'A']
 # remove all schools with types 'not assigned', 'adult', or 'other'
 full_data = full_data[full_data['TYPE'].isin([1, 2, 3, 4])]
@@ -30,28 +31,38 @@ full_data = full_data[full_data.SCHL_FUNC_SETTING == 'Z']
 full_data['level'] = 'bunny123'  # used for easy searching to make sure every line got replaced [works]
 
 # create dictionaries for the grade level combinations and their corresponding grade code values
+# the combinations that each code corresponds to were determined manually using the grade code
+# Appendix in the documentation for the FL MSID data
 levels = {
     'em': [109, 27, 120, 22, 25, 23, 21, 40, 101, 106, 102, 45, 57, 53, 118],
     'eh': [],
     'emh': [29, 14, 55, 26, 100, 47, 28, 24, 105, 108, 113, 114, 107, 77],
     'mh': [68, 76, 103, 62, 110],
 }
+
 # fill in the grade level column with the appropriate value
+# if type is 1, 2, or 3, we know directly what levels are served
 full_data.loc[full_data.TYPE == 1, 'level'] = 'elementary'
 full_data.loc[full_data.TYPE == 2, 'level'] = 'middle'
 full_data.loc[full_data.TYPE == 3, 'level'] = 'high'
+# everything that remains must be determined using the grade code
 full_data.loc[full_data['GRADE_CODE'].isin(levels['em']), 'level'] = 'elementary, middle'
 full_data.loc[full_data['GRADE_CODE'].isin(levels['eh']), 'level'] = 'elementary, high'
 full_data.loc[full_data['GRADE_CODE'].isin(levels['emh']), 'level'] = 'elementary, middle, high'
 full_data.loc[full_data['GRADE_CODE'].isin(levels['mh']), 'level'] = 'middle, high'
 
+# translate charter school status codes into booleans, don't switch the order this goes in
+full_data.loc[full_data.CHARTER_SCHL_STAT != 'Z', 'CHARTER_SCHL_STAT'] = True
+full_data.loc[full_data.CHARTER_SCHL_STAT == 'Z', 'CHARTER_SCHL_STAT'] = False
+
 # remove all but the columns of interest now that filtering is done and rename the columns to simpler titles
 full_data = full_data[['DISTRICT_NAME', 'SCHOOL_NAME_LONG', 'level', 'PHYSICAL_ADDRESS', 'PHYSICAL_CITY',
-                       'PHYSICAL_STATE', 'PHYSICAL_ZIP', 'LATITUDE', 'LONGITUDE']]
+                       'PHYSICAL_STATE', 'PHYSICAL_ZIP', 'LATITUDE', 'LONGITUDE', 'CHARTER_SCHL_STAT']]
 full_data = full_data.rename(columns={'DISTRICT_NAME': 'district_name', 'SCHOOL_NAME_LONG': 'school_name',
                                       'PHYSICAL_ADDRESS': 'street_address', 'PHYSICAL_CITY': 'city',
                                       'PHYSICAL_STATE': 'state', 'PHYSICAL_ZIP': 'zip',
-                                      'LATITUDE': 'latitude', 'LONGITUDE': 'longitude'})
+                                      'LATITUDE': 'latitude', 'LONGITUDE': 'longitude',
+                                      'CHARTER_SCHL_STAT': 'charter'})
 # save the data to a csv file for input into the minimum commute calculator
 full_data.to_csv(path_or_buf='input_data.csv', index=False)
 
