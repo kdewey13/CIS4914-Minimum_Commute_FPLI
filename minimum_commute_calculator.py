@@ -126,9 +126,7 @@ for school in school_list:  # for each school in the list
                             print(e)
     # now that we have compared to every school, add it to the checked list to avoid duplicate comparisons
     checked.append(school[id_index])
-"""
 
-"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME""""""
 print("Finished straightline distance {0}".format(datetime.datetime.now()))
 if connection is not None:
     try:
@@ -144,13 +142,12 @@ if connection is not None:
         wait = 3
     except Error as e:
         print(e)"""
-"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
 
 """Load up distance pairs to avoid recalculating while debugging"""
 # put all the info from the input file into the DB
 data = pandas.read_csv("distance_pairs.csv")
 data.to_sql(name='straight_line_pairs', con=connection, if_exists='replace', index=False)
-
+"""
 # get a list of the districts
 district_list = []
 if connection is not None:
@@ -245,7 +242,6 @@ for district in district_list:
                         except Error as e:
                             print(e)
 
-"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
 print("Finished pairs determination {0}".format(datetime.datetime.now()))
 if connection is not None:
     try:
@@ -272,8 +268,17 @@ if connection is not None:
             "ORDER BY Origin_District, Destination_District, comparison_level, origin_school, distance_between",
             connection)).to_csv("pairs_for_API.csv")
     except Error as e:
-        print(e)
-"""REMOVE THIS BIT WHEN DONE, JUST FOR CHECKING IN MEANTIME"""
+        print(e)"""
+
+"""Load up pairs to run through API to avoid recalculating while debugging"""
+# put all the info from the input file into the DB
+data = pandas.read_csv("pairs_for_API.csv")
+data.to_sql(name='pairs_to_find_commute_between', con=connection, if_exists='replace', index=False)
+
+# Create a table to store the commute times in
+
+# Perform the API calls
+
 
 """This pre-processing method was abandoned in favor of that implememented, but was largely complete at the time 
 that was decided, so here is the code in case it is useful to anybody
