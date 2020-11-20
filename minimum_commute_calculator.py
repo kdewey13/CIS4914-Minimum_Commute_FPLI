@@ -1,22 +1,19 @@
 import geopy.distance  # python module with function for accurate straight line distance calculation
-import pandas  # module for easy spreadsheet/csv read/write & dataframe manipulation
+import pandas  # module for spreadsheet/csv read/write & dataframe manipulation
 import sqlite3  # in-app database to make querying for minumums easy
 from sqlite3 import Error  # allows output of error if occurs
-import datetime  # times program run
+import datetime  # used to manipulate times
 import requests   # module to make HTTP requests
 import pytz  # module to handle time zone
 import tzlocal  # module to handle time zone
 import process_data
 
 
-"""-------------------------------------------------------------------------------------------------------------"""
-"""For this program to work, you must input a file in the same format as the example, or use the download option"""
-"""-------------------------------------------------------------------------------------------------------------"""
-
-
-def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [True, 2, 2], [True, 2, 2]),
-               charter=True, api_key=None, input_file='input_data.csv', distance_pairs_file='distance_pairs.csv',
-               output_file='', download_msid=False, preprocess=False, unprocessed_file=None, make_api_calls=False):
+def calculator(optimization_radius=70, max_radius_to_consider=50, distance_pairs_determination=True,
+               distance_pairs_file='distance_pairs.csv',
+               desired_level_details=([True, 3, 3], [True, 2, 2], [True, 2, 2]),
+               charter=True, api_key=None, input_file='input_data.csv', output_file='commute_pairs.csv',
+               download_msid=False, preprocess=False, unprocessed_file=None, make_api_calls=False):
 
     print("Start time: {0}".format(datetime.datetime.now()))
 
@@ -25,6 +22,7 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
         print("Finished data download and preprocess: {0}".format(datetime.datetime.now()))
     elif preprocess and unprocessed_file is not None:
         process_data.preprocess_fl_msid_data(data_file=unprocessed_file)
+        print("Finished preprocess: {0}".format(datetime.datetime.now()))
 
     # create a dictionary of the desired school levels with level serving as the key and the values as a list
     # (makes iterating later much cleaner). The first value in the list is the number of unique schools to make pairs
@@ -49,8 +47,7 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
     # Read in the input file
     input_data = pandas.read_csv(input_file)
 
-    # if not considering all 3 school levels, remove the ones we don't want.
-    # Remove charter schools if not considering them
+    # if not considering all 3 school levels, remove undesired ones and remove charter schools if not considering them
     if len(school_levels) != 3:
         input_data = input_data[input_data['level'].isin(level_strings)]
     if not charter:
@@ -69,8 +66,8 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
         except Error as e:
             print(e)
 
-    # get the indices that the values of interest are at (if the input file is in the correct order this should
-    # be the same each time, but this doesn't hurt anything to check)
+    # get the indices that the values of interest are at for each school (if the input file is in the same order every
+    # time this should be the same, but this doesn't hurt anything to check)
     id_index, lat_index, long_index, level_index, district_index = '', '', '', '', ''
     for index in range(0, len(cursor.description)):
         if cursor.description[index][0] == 'id':
@@ -84,68 +81,144 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
         elif cursor.description[index][0] == 'district_name':
             district_index = index
 
-    # create a table to store the pairs of schools that are less than max_radius_to_consider miles apart
+    # get a list of the districts to iterate over
+    district_list = []
+    if connection is not None:
+        try:
+            district_list = list(cursor.execute("SELECT DISTINCT district_name FROM school_info").fetchall())
+        except Error as e:
+            print(e)
+
+    if distance_pairs_determination:
+        # if we need to calculate and store the distances between all (viable) school pairs in the state
+        # (viable determined by the optimization radius)
+        if connection is not None:
+            try:
+                cursor.execute("CREATE TABLE IF NOT EXISTS distance_pairs("
+                               "school_1_id INTEGER NOT NULL, "
+                               "school_2_id INTEGER NOT NULL, "
+                               "distance_between FLOAT NOT NULL, "
+                               "PRIMARY KEY(school_1_id, school_2_id), "
+                               "FOREIGN KEY (school_1_id) REFERENCES school_info (id), "
+                               "FOREIGN KEY (school_2_id) REFERENCES school_info (id));")
+                connection.commit()
+            except Error as e:
+                print(e)
+
+        # get the schools with the max/min latitudes and longitudes per district
+        max_min_schools = cursor.execute("SELECT *, MAX(latitude) FROM school_info GROUP BY district_name "
+                                         "UNION SELECT *, MIN(latitude) FROM school_info GROUP BY district_name "
+                                         "UNION SELECT *, MAX(longitude) FROM school_info GROUP BY district_name "
+                                         "UNION SELECT *, MIN(longitude) FROM school_info GROUP BY district_name ").\
+            fetchall()
+        # translate the list into a dict for easier iteration
+        border_schools = {}
+        for district in district_list:
+            border_schools[district] = []
+            for school in max_min_schools:
+                if school[district_index] in district:
+                    border_schools[district].append(school)
+        # determine if any of the border schools fall within the optimization radius per district pair
+        checked = []
+        for district in district_list:  # for each district in the list
+            for other_district in district_list:  # compare it to every district school
+                # don't compare to self nor bidirectionally (i.e. if we have a->b distance, don't need b->a)
+                if district != other_district and other_district not in checked:
+                    close_enough = False
+                    for school in border_schools[district]:
+                        for other_school in border_schools[other_district]:
+                            distance_between = geopy.distance.vincenty((school[lat_index], school[long_index]),
+                                                                       (other_school[lat_index],
+                                                                        other_school[long_index])).miles
+                            if distance_between <= optimization_radius:
+                                close_enough = True
+                                break
+                        if close_enough:
+                            break
+                    if close_enough:
+                        # if here, then at least one pair of schools between the two counties are within the
+                        # optimization radius, so compare all of the schools in the two counties and save them to the
+                        # distance table if they are within the radius
+                        district_1_schools = cursor.execute("SELECT * FROM school_info "
+                                                            "WHERE district_name LIKE '%{0}%'".
+                                                            format(district[0])).fetchall()
+                        district_2_schools = cursor.execute("SELECT * FROM school_info "
+                                                            "WHERE district_name LIKE '%{0}%'".
+                                                            format(other_district[0])).fetchall()
+                        for school in district_1_schools:  # for each school in the list
+                            for other_school in district_2_schools:  # compare it to every other school
+                                if school != other_school:  # don't compare to self
+                                    # find the distance if they are the same level (or for combos, at least 1 level is)
+                                    if (school[level_index] in other_school[level_index]
+                                        or other_school[level_index] in school[level_index]) \
+                                            and school[district_index] != other_school[district_index]:
+                                        distance_between = geopy.distance.vincenty((school[lat_index],
+                                                                                    school[long_index]),
+                                                                                   (other_school[lat_index],
+                                                                                    other_school[long_index])).miles
+                                        #  if distance between is less than the threshold, save the pair
+                                        if distance_between <= optimization_radius:
+                                            if connection is not None:
+                                                try:
+                                                    # save the record to the pairs table
+                                                    cursor.execute(
+                                                        "INSERT INTO distance_pairs(school_1_id, school_2_id, "
+                                                        "distance_between) VALUES ({0},{1},{2})".
+                                                        format(school[id_index], other_school[id_index],
+                                                               distance_between))
+                                                    connection.commit()
+                                                except Error as e:
+                                                    print(e)
+            # have compared to every other district, so add to the checked list to avoid bidirectional calculations
+            checked.append(district)
+
+        print("Finished straight line distance {0}".format(datetime.datetime.now()))
+        # Saves a csv of the distance pairs with details for interim examining and a copy of the distance pairs table
+        # for reloading without actually re-calculating
+        if connection is not None:
+            try:
+                # save the distance pairs for interim examining
+                pandas.DataFrame(pandas.read_sql_query(
+                    "SELECT school_1_id, school_2_id, School_1_Name, School_1_District, "
+                    "school_name as 'School_2_Name', district_name as 'School_2_District', distance_between "
+                    "FROM (SELECT school_1_id, school_2_id, "
+                    "school_name as 'School_1_Name', district_name as 'School_1_District', distance_between "
+                    "FROM distance_pairs JOIN school_info on school_1_id = id) "
+                    "JOIN school_info on school_2_id = id",
+                    connection)).to_csv('distance_pairs_details.csv', index=False)
+            except Error as e:
+                print(e)
+            try:
+                # save the distance pairs table for reloading
+                pandas.DataFrame(pandas.read_sql_query("SELECT * from distance_pairs", connection)).\
+                    to_csv(distance_pairs_file, index=False)
+            except Error as e:
+                print(e)
+    # NOT distance_pairs_determination, means we already have made those calculations and have them stored in a file,
+    # all we need to do is select the pairs that fall under the max_radius_to_consider
+    else:
+        # load up distance pairs from file
+        pandas.read_csv(distance_pairs_file).to_sql(name='distance_pairs', con=connection, if_exists='replace',
+                                                    index=False)
+        connection.commit()
+
+    # create a table to store pairs with distance_between < max_radius_to_consider and insert the appropriate pairs
     if connection is not None:
         try:
             cursor.execute("CREATE TABLE IF NOT EXISTS straight_line_pairs("
-                           "school_1_id INTEGER NOT NULL, school_2_id INTEGER NOT NULL, distance_between FLOAT NOT NULL, "
+                           "school_1_id INTEGER NOT NULL, "
+                           "school_2_id INTEGER NOT NULL, "
+                           "distance_between FLOAT NOT NULL, "
                            "PRIMARY KEY(school_1_id, school_2_id), "
                            "FOREIGN KEY (school_1_id) REFERENCES school_info (id), "
                            "FOREIGN KEY (school_2_id) REFERENCES school_info (id));")
             connection.commit()
         except Error as e:
             print(e)
-    
-    # find the straight line distance for each school pair and save to table if less than the radius we're considering
-    checked = []
-    for school in school_list:  # for each school in the list
-        for other_school in school_list:  # compare it to every other school
-            # don't compare to self nor bidirectionally (i.e. if we have a->b distance, don't need b->a)
-            if school != other_school and other_school[id_index] not in checked:
-                # if they are the same level (or in case of combos, one of the levels is the same) find the distance
-                if (school[level_index] in other_school[level_index] or other_school[level_index] in school[level_index]) \
-                        and school[district_index] != other_school[district_index]:
-                    distance_between = geopy.distance.vincenty((school[lat_index], school[long_index]),
-                                                               (other_school[lat_index], other_school[long_index])).miles
-                    #  if distance between is less than the threshold, save the pair
-                    if distance_between <= max_radius_to_consider:
-                        if connection is not None:
-                            try:
-                                # save the record to the pairs table
-                                cursor.execute("INSERT INTO straight_line_pairs(school_1_id, school_2_id, "
-                                               "distance_between) VALUES ({0},{1},{2})".
-                                               format(school[id_index], other_school[id_index], distance_between))
-                                connection.commit()
-                            except Error as e:
-                                print(e)
-        # now that we have compared to every school, add it to the checked list to avoid bidirectional calculations
-        checked.append(school[id_index])
-    
-    print("Finished straightline distance {0}".format(datetime.datetime.now()))
-    
-    # TODO: Save a csv of the distance pairs for interim examining+debugging, remove when done
-    if connection is not None:
         try:
-            # save the distance pairs for interim examining
-            pandas.DataFrame(pandas.read_sql_query("SELECT school_1_id, school_2_id, School_1_Name, "
-                                                   "School_1_District, school_name as 'School_2_Name', "
-                                                   "district_name as 'School_2_District', distance_between "
-                                                   "FROM (SELECT school_1_id, school_2_id, school_name as 'School_1_Name', "
-                                                   "district_name as 'School_1_District', distance_between "
-                                                   "FROM straight_line_pairs JOIN school_info on school_1_id = id) "
-                                                   "JOIN school_info on school_2_id = id", connection)).\
-                to_csv(distance_pairs_file)
-        except Error as e:
-            print(e)
-    """Load up distance pairs to avoid recalculating while debugging"""
-    # data = pandas.read_csv("distance_pairs_bay.csv")
-    # data.to_sql(name='straight_line_pairs', con=connection, if_exists='replace', index=False)
-
-    # get a list of the districts to iterate over
-    district_list = []
-    if connection is not None:
-        try:
-            district_list = list(cursor.execute("SELECT DISTINCT district_name FROM school_info").fetchall())
+            cursor.execute("INSERT INTO straight_line_pairs SELECT * FROM distance_pairs "
+                           "WHERE distance_between < {0}".format(max_radius_to_consider))
+            connection.commit()
         except Error as e:
             print(e)
 
@@ -176,11 +249,13 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
         paired_districts = list(cursor.execute("SELECT DISTINCT district_name FROM (SELECT district_name "
                                                "FROM (SELECT school_2_id, district_name as 'School_1_District' "
                                                "FROM straight_line_pairs JOIN school_info on school_1_id = id) "
-                                               "JOIN school_info on school_2_id = id WHERE School_1_District LIKE '%{0}%' "
+                                               "JOIN school_info on school_2_id = id "
+                                               "WHERE School_1_District LIKE '%{0}%' "
                                                "UNION SELECT district_name FROM "
                                                "(SELECT school_1_id, district_name as 'School_2_District' "
                                                "FROM straight_line_pairs JOIN school_info on school_2_id = id) "
-                                               "JOIN school_info on school_1_id = id WHERE School_2_District LIKE '%{0}%')"
+                                               "JOIN school_info on school_1_id = id "
+                                               "WHERE School_2_District LIKE '%{0}%')"
                                                .format(district[0])).fetchall())
         api_calls_made = {}  # store the api calls made to avoid duplicate calls ($)
         for other_district in paired_districts:
@@ -192,29 +267,33 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
                             min_schools = cursor.execute("SELECT origin_school, MIN(distance_between) "
                                                          "FROM (SELECT school_1_id as origin_school, distance_between "
                                                          "FROM (SELECT school_1_id, school_2_id, distance_between "
-                                                         "FROM straight_line_pairs JOIN school_info on school_1_id = id "
+                                                         "FROM straight_line_pairs "
+                                                         "JOIN school_info on school_1_id = id "
                                                          "WHERE level LIKE '%{0}%' AND district_name LIKE '{1}') "
-                                                         "JOIN school_info on school_2_id = id WHERE level LIKE '%{0}%' "
+                                                         "JOIN school_info on school_2_id = id "
+                                                         "WHERE level LIKE '%{0}%' "
                                                          "AND district_name LIKE '{2}' "
                                                          "UNION SELECT school_2_id as origin_school, distance_between "
                                                          "FROM (SELECT school_1_id, school_2_id, distance_between "
-                                                         "FROM straight_line_pairs JOIN school_info on school_1_id = id "
+                                                         "FROM straight_line_pairs "
+                                                         "JOIN school_info on school_1_id = id "
                                                          "WHERE level LIKE '%{0}%' AND district_name LIKE '{2}') "
-                                                         "JOIN school_info on school_2_id = id WHERE level LIKE '%{0}%' "
+                                                         "JOIN school_info on school_2_id = id "
+                                                         "WHERE level LIKE '%{0}%' "
                                                          "AND district_name LIKE '{1}' ) "
                                                          "GROUP BY origin_school ORDER BY distance_between Limit {3}".
                                                          format(level, district[0], other_district[0],
                                                                 school_levels[level][0])).fetchall()
                         except Error as e:
-                                print(e)
-                    # now that we have the needed number of schools, we find the desired number of minimal
-                    # pairs for each and use the API to find their distance (if enabled)
+                            print(e)
+                    # now that we have the needed number of schools, we find the desired # of minimal pairs for each
                     for tup in min_schools:
+                        other_mins = []  # list to store the next closest school pairs
+                        # if making API calls is selected, calculate and store after finding pairs
                         if make_api_calls:
-                            other_mins = []  # list to store the next closest school pairs
                             if connection is not None:
                                 try:
-                                    # get the desired number of minimum pairs for this school to schools in the other county
+                                    # get the desired # of minimum pairs for this school to schools in the other county
                                     other_mins = cursor.execute(
                                         "SELECT origin_school, destination_school "
                                         "FROM (SELECT school_1_id as origin_school, school_2_id as destination_school, "
@@ -292,12 +371,15 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
                                                      (result['duration_in_traffic']['value']/60.0))
                                             except Error as e:
                                                 print(e)
+                        # if making API calls is NOT selected, only store the pairs. This can be used to determine the
+                        # price of making the API calls before you do so
                         else:
-                            other_mins = []  # list to store the next closest school pairs
                             if connection is not None:
                                 try:
-                                    # get the desired number of minimum pairs for this school to schools in the other county
-                                    other_mins = cursor.execute(
+                                    # get the desired # of minimum pairs for this school to schools in the other county
+                                    # since we're not making any calculations with the info, we can directly store the
+                                    # selections into the results table
+                                    cursor.execute(
                                         "INSERT INTO commute_pairs "
                                         "SELECT origin_school, destination_school, "
                                         "'{0}' as comparison_level, NULL as commute_distance, NULL as commute_time "
@@ -347,7 +429,7 @@ def calculator(max_radius_to_consider=50, desired_level_details=([True, 3, 3], [
                 "JOIN school_info on destination_school = id) AS op2 JOIN straight_line_pairs AS slp "
                 "ON op2.origin_school = slp.school_2_id AND op2.destination_school = slp.school_1_id) "
                 "ORDER BY Origin_District, Destination_District, comparison_level, origin_school, distance_between",
-                connection)).to_csv("commute_pairs.csv")
+                connection)).to_csv(output_file, index=False)
         except Error as e:
             print(e)
 

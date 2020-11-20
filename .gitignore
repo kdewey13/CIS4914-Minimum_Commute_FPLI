@@ -3,7 +3,8 @@
 /build/
 /dist/
 config.py
-.env
-distance_pairs.csv
-optimized_pairs.csv
+*.env
+*.csv
+!input_data.csv
+*.xlsx
 ##END: python build artifacts
