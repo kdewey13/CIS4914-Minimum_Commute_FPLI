@@ -6,7 +6,8 @@ import os
 
 
 def download_data():
-    # downloads the FL MSID data and saves it into an excel file, which it sends to the preprocessor
+    """Downloads the FL MSID data from FDoE->Accessibility->Master School ID Database->'all schools, all fields'
+    and saves it into an excel file, which it sends to the preprocessing function"""
     response = requests.post(url="http://doeweb-prd.doe.state.fl.us/EDS/MasterSchoolID/Downloads/All_schools.cfm?"
                                  "CFID=14378813&CFTOKEN=7094b0d8c1fa469b-4367B8AA-5056-AAE8-B05DA3D0074B0496",
                              headers={'Host': 'doeweb-prd.doe.state.fl.us', 'Connection': 'keep-alive',
@@ -28,42 +29,46 @@ def download_data():
         f.write(response.content)
     # convert the text file to an xlsx file
     pandas.read_csv('response.txt', sep='\t').to_excel('MSID_data.xlsx', index=False)
-    # clean up the unneeded file
+    # delete the unneeded file
     if os.path.exists('response.txt'):
         os.remove('response.txt')
     # send to pre-process
-    preprocess_fl_msid_data(data_file='MSID_data.xlsx')
+    preprocess_fl_msid_data(data_excel_file='MSID_data.xlsx')
 
 
-def preprocess_fl_msid_data(data_file='MSID_all_schools.xlsx'):
+def preprocess_fl_msid_data(data_excel_file=None):
     """This function will pre-process the MSID data taken from FL DOE and output a csv of the format expected by the
-    minimum commute calculator function. It can be used again if desired and updated if the fields or
-    data codes have been changed. The FL school data taken from FDoE->Accessibility->Master School ID Database.
+    minimum commute calculator function.
+    Will need to be updated if the fields or data codes have been changed.
+    Taken from FDoE->Accessibility->Master School ID Database.
     The data used in this script was downloaded using the 'all schools, all fields' option.
 
-    IMPORTANT: make sure to re-save the file (as xlsx) the file formatting is messed up in the download."""
+    IMPORTANT: if the download is made manually (not using download_data()) re-save the download (as xlsx).
+    As of 2020, the file formatting is messed up in the download and doesn't permit opening as this function attempts."""
 
-    # read in the excel file for processing
-    full_data = pandas.read_excel(data_file)
+    # read in the excel file for processing, creates a data frame of the data
+    full_data = pandas.read_excel(data_excel_file)
 
-    # remove all but the columns of interest
+    # select only the columns of interest from the data frame
     full_data = full_data[['TYPE', 'ACTIVITY_CODE', 'DISTRICT_NAME', 'SCHOOL_NAME_LONG', 'GRADE_CODE',
                            'PHYSICAL_ADDRESS', 'PHYSICAL_CITY', 'PHYSICAL_STATE', 'PHYSICAL_ZIP',
                            'SCHL_FUNC_SETTING', 'LATITUDE', 'LONGITUDE', 'CHARTER_SCHL_STAT']]
+
     # remove all but active schools
-    # following syntax filters full_data, only keeping rows w/ ACTIVITY_CODE equal to A
+    # this syntax filters full_data, only keeping rows w/ ACTIVITY_CODE equal to A
     full_data = full_data[full_data.ACTIVITY_CODE == 'A']
     # remove all schools with types 'not assigned', 'adult', or 'other'
-    # (keep only elem (1), middle (2), high (3), and combo (4))
+    # (keep only elem (TYPE code=1), middle (2), high (3), and combo (4))
     full_data = full_data[full_data['TYPE'].isin([1, 2, 3, 4])]
     # remove all specialized schools (adult, DJJ, home, virtual, etc), keep only N/A
     full_data = full_data[full_data.SCHL_FUNC_SETTING == 'Z']
 
     # add a column to store the grade level
-    full_data['level'] = 'bunny123'  # used for easy searching to make sure every line got replaced [works]
+    full_data['level'] = 'bunny123'  # used weird string for easy searching to make sure every line got replaced [works]
 
-    # Create dictionaries for the grade level combinations and their corresponding grade code values. The combinations
-    # for each combination were determined manually using the grade code Appendix in the docs for the FL MSID data.
+    # Create dictionaries for the grade level combinations and their corresponding grade code values. The combination
+    # that each code corresponds to were determined manually using the grade code Appendix in the docs for the
+    # FL MSID data (saved in project as PDF, available on FLDOE).
     levels = {
         'em': [109, 27, 120, 22, 25, 23, 21, 40, 101, 106, 102, 45, 57, 53, 118],
         'eh': [],

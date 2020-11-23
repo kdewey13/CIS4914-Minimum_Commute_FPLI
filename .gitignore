@@ -3,6 +3,7 @@
 /build/
 /dist/
 config.py
+config.pyc
 *.env
 *.csv
 !input_data.csv
