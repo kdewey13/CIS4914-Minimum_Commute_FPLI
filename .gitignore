@@ -1,11 +1,11 @@
 **/__pycache__
 ###START: python build artifacts
+FPLI_Minimum_Commutes.egg-info/
 /build/
 /dist/
 config.py
-config.pyc
 *.env
 *.csv
-!input_data.csv
+!input_data_example.csv # keep the example input file
 *.xlsx
 ##END: python build artifacts

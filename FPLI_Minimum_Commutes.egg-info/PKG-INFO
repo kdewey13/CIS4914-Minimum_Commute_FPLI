@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: FPLI-Minimum-Commutes
+Version: 0.0.1
+Summary: fplimincomm@gmail.com
+Home-page: https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
+Author: Kelsey Dewey
+Author-email: author@example.com
+License: UNKNOWN
+Description: The readme will be here once I write it.
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=2.7
+Description-Content-Type: text/markdown

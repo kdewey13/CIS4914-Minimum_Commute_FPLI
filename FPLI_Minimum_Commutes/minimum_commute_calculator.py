@@ -9,20 +9,20 @@ import tzlocal  # module to handle time zone
 import process_data
 
 
-def calculator(optimization_radius=70, max_radius_to_consider=50,
-               distance_pairs_determination=True, distance_pairs_csv='distance_pairs.csv',
-               desired_level_details=([True, 3, 3], [True, 2, 2], [True, 2, 2]), charter=True,
-               input_csv='input_data.csv', output_csv='commute_pairs.csv',
-               download_msid=False, preprocess=False, unprocessed_excel_file=None,
-               api_key=None, make_api_calls=False):
+def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
+                       distance_pairs_determination=True, distance_pairs_csv='distance_pairs.csv',
+                       desired_level_details=([True, 3, 3], [True, 2, 2], [True, 2, 2]), charter=True,
+                       input_csv='fpli_min_com_input_data.csv', output_csv='fpli_min_commute_pairs.csv',
+                       download_msid=False, preprocess=False, unprocessed_excel_file=None,
+                       api_key=None, make_api_calls=False):
 
     print("Start time: {0}".format(datetime.datetime.now()))
 
     if download_msid:
-        process_data.download_data()
+        process_data.download_data(input_csv=input_csv)
         print("Finished data download and preprocess: {0}".format(datetime.datetime.now()))
     elif preprocess and unprocessed_excel_file is not None:
-        process_data.preprocess_fl_msid_data(data_excel_file=unprocessed_excel_file)
+        process_data.preprocess_fl_msid_data(data_excel_file=unprocessed_excel_file, input_csv=input_csv)
         print("Finished preprocess: {0}".format(datetime.datetime.now()))
 
     # Create a dictionary of the desired school levels (makes iterating later much cleaner).

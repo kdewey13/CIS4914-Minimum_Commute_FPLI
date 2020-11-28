@@ -5,7 +5,7 @@ import requests
 import os
 
 
-def download_data():
+def download_data(input_csv=None):
     """Downloads the FL MSID data from FDoE->Accessibility->Master School ID Database->'all schools, all fields'
     and saves it into an excel file, which it sends to the preprocessing function"""
     response = requests.post(url="http://doeweb-prd.doe.state.fl.us/EDS/MasterSchoolID/Downloads/All_schools.cfm?"
@@ -33,10 +33,10 @@ def download_data():
     if os.path.exists('response.txt'):
         os.remove('response.txt')
     # send to pre-process
-    preprocess_fl_msid_data(data_excel_file='MSID_data.xlsx')
+    preprocess_fl_msid_data(data_excel_file='MSID_data.xlsx', input_csv=input_csv)
 
 
-def preprocess_fl_msid_data(data_excel_file=None):
+def preprocess_fl_msid_data(data_excel_file=None, input_csv=None):
     """This function will pre-process the MSID data taken from FL DOE and output a csv of the format expected by the
     minimum commute calculator function.
     Will need to be updated if the fields or data codes have been changed.
@@ -99,5 +99,10 @@ def preprocess_fl_msid_data(data_excel_file=None):
                                           'PHYSICAL_STATE': 'state', 'PHYSICAL_ZIP': 'zip',
                                           'LATITUDE': 'latitude', 'LONGITUDE': 'longitude',
                                           'CHARTER_SCHL_STAT': 'charter'})
+    # strip the whitespace from the data
+    # source: https://stackoverflow.com/questions/33788913/pythonic-efficient-way-to-strip-whitespace-from-every-
+    # pandas-data-frame-cell-tha
+    full_data = full_data.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+
     # save the data to a csv file for input into the minimum commute calculator
-    full_data.to_csv(path_or_buf='input_data.csv', index=False)
+    full_data.to_csv(path_or_buf=input_csv, index=False)
