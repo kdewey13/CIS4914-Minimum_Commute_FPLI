@@ -99,11 +99,10 @@ def preprocess_fl_msid_data(data_excel_file=None, input_csv=None):
                                           'PHYSICAL_STATE': 'state', 'PHYSICAL_ZIP': 'zip',
                                           'LATITUDE': 'latitude', 'LONGITUDE': 'longitude',
                                           'CHARTER_SCHL_STAT': 'charter'})
-    # strip the whitespace from the data
-    # source: https://stackoverflow.com/questions/33788913/pythonic-efficient-way-to-strip-whitespace-from-every-
-    # pandas-data-frame-cell-tha
-    df_obj = full_data.select_dtypes(['object'])
-    full_data[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
+    # strip the whitespace from the rows with strings in them
+    # https://stackoverflow.com/questions/58287398/is-there-a-way-to-trim-strip-whitespace-in-multiple-columns-of-a-pandas-datafram
+    cols = ['district_name', 'school_name', 'street_address', 'city', 'state', 'zip']
+    full_data[cols] = full_data[cols].apply(lambda x: x.str.strip())
 
     # save the data to a csv file for input into the minimum commute calculator
     full_data.to_csv(path_or_buf=input_csv, index=False)

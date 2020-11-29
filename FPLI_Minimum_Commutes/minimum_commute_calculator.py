@@ -139,7 +139,7 @@ def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
                     # find the distances between the border schools between the 2 districts (up to 4 schools ea)
                     for school in border_schools[district]:
                         for other_school in border_schools[other_district]:
-                            distance_between = geopy.distance.vincenty((school[lat_index], school[long_index]),
+                            distance_between = geopy.distance.geodesic((school[lat_index], school[long_index]),
                                                                        (other_school[lat_index],
                                                                         other_school[long_index])).miles
                             # if a pair is within the optimization radius
