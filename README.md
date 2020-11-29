@@ -22,12 +22,15 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
 ## Installation
 
 * Download the latest version of Python at https://www.python.org/downloads/.
+    - save the program in C: drive
 * In the command line: 
-    1. verify your python install success: `python3 --version`
-    2. install pip, setuptools, and wheel: `python3 -m pip install --upgrade pip setuptools wheel`
-    3. create a virtual environment named fplimincomm (or whatever name desired): `python3 -m venv fplimincomm_env`
-    4. activate the virtual environment: `source fplimincomm_env/bin/activate`
-    5. install the calculator: `pip3 install FPLI-Minimum-Commutes`
+    1. verify your python install success: `python --version`
+    2. install pip, setuptools, and wheel: `python -m pip install --upgrade pip setuptools wheel`
+    3. create a virtual environment named fplimincomm (or whatever name desired): `python -m venv fplimincomm_env`
+    4. activate the virtual environment: 
+        - on windows: `.\fplimincomm_env\Scripts\activate`
+        - on windows: `source fplimincomm_env/bin/activate`
+    5. install the calculator: `pip install FPLI-Minimum-Commutes==0.0.1`
 * To use in Stata; after completing the above, do the following in the Stata command line:
     1. run `python search`
         - the above should show the path to the created virtual environment
@@ -233,8 +236,10 @@ inter-connectivity between counties will serve the purpose of estimating commute
     - xlsxwriter (writes xlsx files, only needed if the process_data module is implemented (i.e. if the input data file is not provided))
     - os (used to delete a created file, only needed if the process_data module is implemented (i.e. if the input data file is not provided))
 - For package deployment: 
-    - packages: setuptools, wheel, and twine. 
-    - pypi account credentials (fplimincomm@gmail.com).
+    - packages: setuptools, wheel, and twine
+    - pypi account credentials (fplimincomm@gmail.com)
+    - pypi API token for FPLI Minimum Commutes
+    - contact the repository owner or project lead for credentials
 - To make the API calls: valid Google Distance Matrix API product key.
 
 ####Input Data File Format Requirements
@@ -263,11 +268,13 @@ An example is provided, see 'input_data_example.csv'.
 
 ### Packaging and Deploying Updates
 To update the package, contact the repository owner, then:
-1. Make the desired updates and push to the remote repository.
+1. Make the desired updates.
 2. Increment the version number in setup.py.
-3. In the command line:
-    1. navigate to the directory where the package is located
-    2. update setuptools and wheel: `python3 -m pip install --user --upgrade setuptools wheel`
-    3. run `python3 setup.py sdist bdist_wheel`
-    4. update twine: `python3 -m pip install --user --upgrade twine`
-    5. run `twine upload dist/*` and provide the credentials for the fplimincomm pypi account.
+3. Push to the remote repository.
+4. Place the .pypirc file in your home directory (contact repository owner or project lead for access)
+5. In the command line:
+    1. navigate to the directory where the package is located 
+    2. update setuptools and wheel: `python -m pip install --user --upgrade setuptools wheel`
+    3. run `python setup.py sdist bdist_wheel`
+    4. update twine: `python -m pip install --user --upgrade twine`
+    5. run `twine upload dist/*` (credentials for the fplimincomm pypi account provided by .pypirc file)

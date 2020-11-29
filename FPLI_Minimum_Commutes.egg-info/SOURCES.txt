@@ -1,7 +1,6 @@
 README.md
 setup.py
 FPLI_Minimum_Commutes/__init__.py
-FPLI_Minimum_Commutes/config.py
 FPLI_Minimum_Commutes/main.py
 FPLI_Minimum_Commutes/minimum_commute_calculator.py
 FPLI_Minimum_Commutes/old_implementation.py

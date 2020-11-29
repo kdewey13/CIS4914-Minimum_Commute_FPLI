@@ -1,8 +1,8 @@
 **/__pycache__
 ###START: python build artifacts
-FPLI_Minimum_Commutes.egg-info/
 /build/
 /dist/
+/FPLI_Minimum_Commutes.egg-info/
 config.py
 *.env
 *.csv
