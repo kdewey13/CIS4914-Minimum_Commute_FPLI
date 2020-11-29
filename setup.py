@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="FPLI_Minimum_Commutes",
-    version="5",
+    version="6",
     author="Kelsey Dewey",
     author_email="author@example.com",
     description="fplimincomm@gmail.com",

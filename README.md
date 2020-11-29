@@ -25,7 +25,7 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
 * Download the latest version of Python at https://www.python.org/downloads/.
     - select ‘Custom Installation’ when you open the downloaded executable installation file
     - allow all the optional installation parameters
-    - save the program in C: drive and select all the advanced features then install
+    - save the program in the C: drive and select all the advanced features then install
     - disable the path length limit when/if prompted after installation
 * In the command line (open as administrator): 
     1. verify your python install success: `python --version`
@@ -41,6 +41,9 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
         - the above should show the path to the created virtual environment
     2. set the python executable to the created virtual environment with: `set python_exec <path_to_virtual_environment>`
     - Refer to https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/.
+* As of Nov. 2020, there is a bug in the Numpy module installed with the FPLI-Minimum-Commutes package. 
+To fix run: `pip install numpy==1.19.3` on the command line. This bug is projected to be fixed in January 
+of 2021.
 
 ## Process
 Conceptually, the process of the function can be broken down into the following high-level steps.
