@@ -16,14 +16,11 @@ setuptools.setup(
     install_requires=[
         'geopy',
         'pandas',
-        'sqlite3',
-        'datetime',
         'requests',
         'pytz',
         'tzlocal',
         'xlrd',
-        'xlsxwriter',
-        'os'],
+        'xlsxwriter'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

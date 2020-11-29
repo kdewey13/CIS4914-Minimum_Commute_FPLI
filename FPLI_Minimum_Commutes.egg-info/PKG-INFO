@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: FPLI-Minimum-Commutes
-Version: 2
+Version: 3
 Summary: fplimincomm@gmail.com
 Home-page: https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
 Author: Kelsey Dewey
@@ -18,11 +18,11 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         
         This calculator provides a reliable estimate of the inter-connectivity of county pairs across Florida, and thus is 
         a useful data set for determining the incremental time required for a worker to commute from one county to another. 
-        The function inputs may be used to tailor the pre-processing steps and the number of schools pairs excluded from 
+        The function inputs may be used to tailor the pre-processing steps and the number of school pairs excluded from 
         consideration due to the straight line distance between them. The provided input parameters can thus be used to achieve the user's desired degree of 
         optimization between price of calculation and accuracy/depth of results. The calculator identifies, for each level of 
         school, a customizable number of school pairs which are the most likely to have the shortest commute times. 
-        The calculator can easily be run with many sets of input parameters, and be re-run each year with new data. 
+        The calculator can easily be run with many sets of input parameters and be re-run each year with new data. 
         
         ## Github
         https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
@@ -30,15 +30,18 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         ## Installation
         
         * Download the latest version of Python at https://www.python.org/downloads/.
-            - save the program in C: drive
-        * In the command line: 
+            - select ‘Custom Installation’ when you open the downloaded executable installation file
+            - allow all the optional installation parameters
+            - save the program in C: drive and select all the advanced features then install
+            - disable the path length limit when/if prompted after installation
+        * In the command line (open as administrator): 
             1. verify your python install success: `python --version`
             2. install pip, setuptools, and wheel: `python -m pip install --upgrade pip setuptools wheel`
             3. create a virtual environment named fplimincomm (or whatever name desired): `python -m venv fplimincomm_env`
             4. activate the virtual environment: 
                 - on windows: `.\fplimincomm_env\Scripts\activate`
                 - on linux/mac: `source fplimincomm_env/bin/activate`
-            5. install the calculator: `pip install FPLI-Minimum-Commutes==0.0.1`
+            5. install the calculator: `pip install FPLI-Minimum-Commutes==X` where X is the current version number
         * To use in Stata; after completing the above, do the following in the Stata command line:
             1. run `python search`
                 - the above should show the path to the created virtual environment
@@ -63,7 +66,7 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
                 is kept/removed
             - save the input data to the database
             - generate a database cursor, a list of all the schools/their information, and a list of the districts
-        4. Perform the straight line distance determination.
+        4. Perform the straight-line distance determination.
             1. for each district, find the schools with max/min latitude and longitude. These constitute a border, all other
              schools in that district lie interior to these schools
             2. for each district pair, compare their border schools and determine if any fall within the optimization radius
@@ -102,7 +105,7 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         - import the package: `import FPLI-Minimum-Commutes`
         - for simplicity, import the module containing the calculator and rename for 
         brevity: `from FPLI-Minimum-Commutes import minimum_commute_calculator as mcc` 
-        - call the calculator function with: `mcc.calculator(<desired input parameters>)`, being sure to update all input 
+        - call the calculator function with: `mcc.commute_calculator(<desired input parameters>)`, being sure to update all input 
         variables to the desired values
         
         To use the module in a Stata do file:
@@ -118,8 +121,8 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         file `import config.py as config` (do in the line after importing the minimim_commute_calculator module). Then in the 
         function input parameter list write: api_key=config.distance_key. 
         
-        ### Input Variables for minimum_commute_calculator.calculator()
-        The main function of the FPLI_Minimum_Commutes package is minimum_commute_calculator.calculator(). The 
+        ### Input Variables for minimum_commute_calculator.commute_calculator()
+        The main function of the FPLI_Minimum_Commutes package is minimum_commute_calculator.commute_calculator(). The 
         following input variables are available to tailor the function's actions as desired. See 'Process' for further information 
         about how the variables are utilized. The variable value need not be specified if the default value is desired for use. 
         
@@ -195,31 +198,31 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         
         The FPLI-Minimum-Commutes package contains three modules.
         1. minimum_commute_calculator, functions provided:
-            1. calculator(): Main function of use. Process and input parameters described above.
+            1. commute_calculator(): Main function of use. Process and input parameters described above.
             2. find_school(): Used by calculator to find a school tuple from a provided list of schools. Not intended for 
-            stand alone use.
+            stand-alone use.
             3. get_time(): Provides the string time stamp corresponding to 7 am the day after the program is being run, in the 
             time zone it is being run from, in the format of seconds from the epoch. Used to make the commute time request for 
-            commutes departing at that time. Not intended for stand alone use.
+            commutes departing at that time. Not intended for stand-alone use.
         2. process_data, functions provided:
             1. download_data(input_csv=None): Will download the FL DOE MSID data and preprocess it into the correct format for 
-            use in minimum_commute_calculator.calculator(); the variable input_csv is the name or file path to be given to the 
+            use in minimum_commute_calculator.commute_calculator(); the variable input_csv is the name or file path to be given to the 
             created input file, its type is a string.
             2. preprocess_fl_msid_data(data_excel_file=None, input_csv=None): Will preprocess the FL DOE MSID data provided in
             the file referenced by _data_excel_file_; the variable data_excel_file is the name or file path of the excel file 
             containing the FL DOE MSID data, its type is a string, and the variable input_csv is the name or file path to be 
             given to the created input file, its type is a string.
         3. main, functions provided:
-            1. main(); Driver function for running the program as a stand alone. Given that the program is solely intended for 
+            1. main(); Driver function for running the program as a stand-alone. Given that the program is solely intended for 
             use as an imported package, this function is not intended for use, however if in the future changes are made,
             the driver function can be used for debugging and if needed it can be used to run the program on its own. All it 
-            does is call calculator() so in order to use it you will need to be able to access the file and edit the input 
+            does is call commute_calculator() so in order to use it you will need to be able to access the file and edit the input 
             parameters. 
             
-        Additionally, the package contains 'input_data_example.csv', which is a csv file in the format that calculator() 
+        Additionally, the package contains 'input_data_example.csv', which is a csv file in the format that commute_calculator() 
         expects. It also contains 'FLDOE MSID Information.pdf', which is a pdf describing all the data available in the FL DOE 
         MSID database, along with appendices of all codes contained therein (as of 2020, may need replaced in future). 
-        Finally it contains the file old_implementation.py, the contents of which are thoroughly explained therein. 
+        Finally, it contains the file old_implementation.py, the contents of which are thoroughly explained therein. 
         However to summarize, it contains an implementation of minimum pairs selection based on minimum straight line 
         distance and best and worst case commute time estimation. It was abandoned because even with relatively stringent 
         pair removal, the optimized pairs to run through the API were still over 700,000 pairs, i.e. over $7000 to calculate. It was unknown how much that figure would be reduced by continuing the optimization as the API calculations 
@@ -231,7 +234,7 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         ### Requirements
         - Python version 2.7 or newer.
         - For package installation: pip, setuptools, and wheel. 
-        - Python packages required for the calculator (should be installed with the FPLI-Minimum-Commutes package): 
+        - Python packages required for the calculator (should be automatically installed with the FPLI-Minimum-Commutes package): 
             - geopy.distance  (straight line distance calculation using Vincenty's formulae)
             - pandas  (provides spreadsheet/csv read/write & dataframe manipulation)
             - sqlite3  (in-app database to store data and query against)
@@ -251,7 +254,7 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         - To make the API calls: valid Google Distance Matrix API product key.
         
         ####Input Data File Format Requirements
-        The calculator() function requires the input data file (corresponding to input variable _input_csv_) to be a csv file
+        The commute_calculator() function requires the input data file (corresponding to input variable _input_csv_) to be a csv file
         with the following columns each with the specified data type:
         - district_name: string value of the district the school is in
         - school_name: string value of the school name
@@ -274,18 +277,18 @@ Description: # Florida Price Level Index (FPLI) Minimum Commute Calculator
         
         An example is provided, see 'input_data_example.csv'. 
         
-        ### Packaging and Deploying Updates
+        ## Packaging and Deploying Updates
         To update the package, contact the repository owner, then:
         1. Make the desired updates.
         2. Increment the version number in setup.py.
         3. Push to the remote repository.
         4. Place the .pypirc file in your home directory (contact repository owner or project lead for access)
-        5. In the command line:
+        5. In the command line (run as administrator):
             1. navigate to the directory where the package is located 
             2. update setuptools and wheel: `python -m pip install --user --upgrade setuptools wheel`
             3. run `python setup.py sdist bdist_wheel`
             4. update twine: `python -m pip install --user --upgrade twine`
-            5. run `twine upload dist/*` (credentials for the fplimincomm pypi account provided by .pypirc file)
+            5. run `python -m twine upload dist/*` (credentials for the fplimincomm pypi account automatically provided by .pypirc file)
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License

@@ -33,7 +33,8 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
     4. activate the virtual environment: 
         - on windows: `.\fplimincomm_env\Scripts\activate`
         - on linux/mac: `source fplimincomm_env/bin/activate`
-    5. install the calculator: `pip install FPLI-Minimum-Commutes==X` where X is the current version number
+    5. install the calculator: `pip install FPLI-Minimum-Commutes==X` where X is the current version number, 
+    see https://pypi.org/project/FPLI-Minimum-Commutes/
 * To use in Stata; after completing the above, do the following in the Stata command line:
     1. run `python search`
         - the above should show the path to the created virtual environment
