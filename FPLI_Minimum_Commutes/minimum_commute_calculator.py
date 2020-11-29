@@ -170,7 +170,7 @@ def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
                                     if (school[level_index] in other_school[level_index]
                                         or other_school[level_index] in school[level_index]) \
                                             and school[district_index] != other_school[district_index]:
-                                        distance_between = geopy.distance.vincenty((school[lat_index],
+                                        distance_between = geopy.distance.geodesic((school[lat_index],
                                                                                     school[long_index]),
                                                                                    (other_school[lat_index],
                                                                                     other_school[long_index])).miles

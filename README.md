@@ -45,6 +45,19 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
 * As of Nov. 2020, there is a bug in the Numpy module installed with the FPLI-Minimum-Commutes package. 
 To fix run: `pip install numpy==1.19.3` on the command line. This bug is projected to be fixed in January 
 of 2021.
+* Note: Stata implementation needs troubleshooting as at time of writing author does not have access to 
+Stata to test these implementation steps.
+* To install in PyCharm; complete steps 1 and 2 from the command line section above, then:
+    1. install PyCharm
+    2. open a new project, use the desired directory as the Location and the installed version of 
+    Python (saved in C: above) as the Base Interpreter
+    3. in the PyCharm terminal (tab at bottom of PyCharm window) run `pip install FPLI-Minimum-Commutes`
+        - if this does not work try: `pip install FPLI-Minimum-Commutes==X` where X is the current 
+        version number, see https://pypi.org/project/FPLI-Minimum-Commutes/
+    4. As of Nov. 2020, there is a bug in the Numpy module installed with the FPLI-Minimum-Commutes 
+    package. To fix run: `pip install numpy==1.19.3` in the python terminal. This bug is projected to 
+    be fixed in January of 2021.
+
 
 ## Process
 Conceptually, the process of the function can be broken down into the following high-level steps.
@@ -298,3 +311,4 @@ To update the package, contact the repository owner, then:
     3. run `python setup.py sdist bdist_wheel`
     4. update twine: `python -m pip install --user --upgrade twine`
     5. run `python -m twine upload dist/*` (credentials for the fplimincomm pypi account automatically provided by .pypirc file)
+        - if an error occurs stating that the file already exists, run `python -m twine upload --skip-existing dist/*`
