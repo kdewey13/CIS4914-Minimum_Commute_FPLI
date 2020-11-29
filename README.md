@@ -228,7 +228,9 @@ The FPLI-Minimum-Commutes package contains three modules.
 Additionally, the package contains 'input_data_example.csv', which is a csv file in the format that commute_calculator() 
 expects. It also contains 'FLDOE MSID Information.pdf', which is a pdf describing all the data available in the FL DOE 
 MSID database, along with appendices of all codes contained therein (as of 2020, may need replaced in future if the 
-fields are altered). Finally, it contains the file old_implementation.py, the contents of which are thoroughly 
+fields are altered). The word document version of the user guide is also contained in the package. 
+
+Finally, it contains the file old_implementation.py, the contents of which are thoroughly 
 explained therein. However to summarize, it contains an implementation of minimum pairs selection based on minimum 
 straight line distance and best and worst case commute time estimation. It was abandoned because even with relatively 
 stringent pair removal, the optimized pairs to run through the API were still over 700,000 pairs, i.e. over $7000 to 
