@@ -6,7 +6,7 @@ import datetime  # used to manipulate times
 import requests   # module to make HTTP requests
 import pytz  # module to handle time zone
 import tzlocal  # module to handle time zone
-import process_data
+import FPLI_Minimum_Commutes.process_data as process_data
 
 
 def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
