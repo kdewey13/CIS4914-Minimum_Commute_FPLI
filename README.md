@@ -34,8 +34,9 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
     4. activate the virtual environment: 
         - on windows: `.\fplimincomm_env\Scripts\activate`
         - on linux/mac: `source fplimincomm_env/bin/activate`
-    5. install the calculator: `pip install FPLI-Minimum-Commutes==X` where X is the current version number, 
-    see https://pypi.org/project/FPLI-Minimum-Commutes/
+    5. install the calculator: `pip install FPLI-Minimum-Commutes` 
+        - if this does not work try: `pip install FPLI-Minimum-Commutes==X` where X is the current version number, 
+        see https://pypi.org/project/FPLI-Minimum-Commutes/
 * To use in Stata; after completing the above, do the following in the Stata command line:
     1. run `python search`
         - the above should show the path to the created virtual environment
@@ -120,7 +121,7 @@ To avoid having to type the API key into the function repeatedly, place a config
 the function will be run. Inside this file, place only the following text: `distance_key = "<place_your_key_here>"` 
 where <place_your_key_here> is replaced with your Google Distance Matrix API product key. Leave the quotation marks 
 around the key. Once this file is in place, the api_key parameter can be set by importing the config 
-file `import config.py as config` (do in the line after importing the minimim_commute_calculator module). Then in the 
+file `import config` (do in the line after importing the minimim_commute_calculator module). Then in the 
 function input parameter list write: api_key=config.distance_key. 
 
 ### Input Variables for minimum_commute_calculator.commute_calculator()
