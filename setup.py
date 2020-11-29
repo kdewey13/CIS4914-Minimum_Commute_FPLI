@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="FPLI_Minimum_Commutes",
-    version="2",
+    version="3",
     author="Kelsey Dewey",
     author_email="author@example.com",
     description="fplimincomm@gmail.com",
@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI",
     packages=setuptools.find_packages(),
     install_requires=[
-        'geopy.distance',
+        'geopy',
         'pandas',
         'sqlite3',
         'datetime',
