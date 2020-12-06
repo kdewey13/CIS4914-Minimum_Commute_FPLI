@@ -300,9 +300,12 @@ separated by a comma followed by a space. Recommended values:
 An example is provided, see 'input_data_example.csv'. 
 
 ## Packaging and Deploying Updates
+Refer to https://packaging.python.org/tutorials/packaging-projects/ for Python's tutorial for package deployment.
 To update the package, contact the repository owner, then:
 1. Make the desired updates.
-2. Increment the version number in setup.py.
+2. Increment the version number in setup.py. 
+    - If any new packages are required for the project to remain functional, add them to the 'install_requires' 
+    dependency list in setup.py.   
 3. Push to the remote repository.
 4. Place the .pypirc file in your home directory (contact repository owner or project lead for access)
 5. In the command line (run as administrator):

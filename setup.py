@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="FPLI_Minimum_Commutes",
-    version="9",
+    version="10",
     author="Kelsey Dewey",
-    author_email="author@example.com",
-    description="fplimincomm@gmail.com",
+    author_email="fplimincomm@gmail.com",
+    description="FPLI Inter-District Minimum Commute Estimator",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI",
