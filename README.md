@@ -142,7 +142,8 @@ around the key. Once this file is in place, the api_key parameter can be set in 
 file `import config` (do in the line after importing the minimim_commute_calculator module). Then in the 
 function input parameter list write: api_key=config.distance_key.
 
-Obtain API keys through a Google Developer account. Consult the Google Distance Matrix API pricing sheet to determine 
+Obtain API keys through a Google Developer account. Be sure to enable the Distance Matrix API for the project 
+associated with your key/account. Consult the Google Distance Matrix API pricing sheet to determine 
 the cost of the API calls. The Advanced features are used in this package, ensure to verify correct pricing. 
 
 ### Input Variables for minimum_commute_calculator.commute_calculator()

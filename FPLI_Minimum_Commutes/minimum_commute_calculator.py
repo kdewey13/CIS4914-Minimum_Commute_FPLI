@@ -504,14 +504,10 @@ def commute_calculator(optimization_radius=90, max_radius_to_consider=60,
 def find_school(school_id, id_index, school_list):
     """Returns the school tuple that matches 'school_id' from 'school_list'."""
     # by our definition of school_list/the school ids, the index of the school in the list
-    # should always also be its id, but check jic to make sure we don't break anything
-    if school_list[school_id] == school_id:
-        return school_list[school_id]
-    else:
-        for school in school_list:
-            if school[id_index] == school_id:
-                return school
-        return None
+    for school in school_list:
+        if school[id_index] == school_id:
+            return school
+    return None
 
 
 def get_time():
