@@ -9,9 +9,9 @@ import tzlocal  # module to handle time zone
 import FPLI_Minimum_Commutes.process_data as process_data
 
 
-def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
+def commute_calculator(optimization_radius=90, max_radius_to_consider=60,
                        distance_pairs_determination=True, distance_pairs_csv='distance_pairs.csv',
-                       desired_level_details=([True, 3, 3], [True, 2, 2], [True, 2, 2]), charter=True,
+                       desired_level_details=([True, 4, 4], [True, 3, 3], [True, 3, 3]), charter=True,
                        input_csv='fpli_min_com_input_data.csv', output_csv='fpli_min_commute_pairs.csv',
                        download_msid=False, preprocess=False, unprocessed_excel_file=None,
                        api_key=None, make_api_calls=False):
@@ -427,8 +427,10 @@ def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
                                         "WHERE origin_school = {3} ORDER BY distance_between LIMIT {4}".
                                             format(level, district[0], other_district[0], tup[0],
                                                    school_levels[level][1]))
+                                    connection.commit()
                                 except Error as e:
                                     print(e)
+                                    wait = 3 # figure out unique pair query here
     print("Finished pairs determination {0}".format(datetime.datetime.now()))
     if connection is not None:
         try:
@@ -482,6 +484,21 @@ def commute_calculator(optimization_radius=70, max_radius_to_consider=50,
                 connection)).to_csv(output_csv, index=False)
         except Error as e:
             print(e)
+
+    # print the number of unique pairs for determining cost of API calls
+    pairs_list = []
+    if connection is not None:
+        try:
+            pairs_list = list(cursor.execute("SELECT DISTINCT origin_school, destination_school "
+                                             "FROM commute_pairs").fetchall())
+        except Error as e:
+            print(e)
+    # count unique items
+    unique_pairs = []
+    for pair in pairs_list:
+        if (pair[0], pair[1]) and (pair[1], pair[0]) not in unique_pairs:
+            unique_pairs.append(pair)
+    print("Number unique pairs to make API calls for: {0}".format(len(unique_pairs)))
 
 
 def find_school(school_id, id_index, school_list):
