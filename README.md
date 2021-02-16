@@ -30,34 +30,30 @@ https://github.com/kdewey13/CIS4914-Minimum_Commute_FPLI
 * In the command line (open as administrator): 
     1. verify your python install success: `python --version`
     2. install pip, setuptools, and wheel: `python -m pip install --upgrade pip setuptools wheel`
-    3. create a virtual environment named fplimincomm (or whatever name desired): `python -m venv fplimincomm_env`
-    4. activate the virtual environment: 
+* To use in Stata; after completing steps 1 and 2 on the command line: 
+    3. Continuing on the command line:
+       a. create a virtual environment named fplimincomm (or whatever name desired): `python -m venv fplimincomm_env`
+       b. activate the virtual environment:
         - on windows: `.\fplimincomm_env\Scripts\activate`
         - on linux/mac: `source fplimincomm_env/bin/activate`
-    5. install the calculator: `pip install FPLI-Minimum-Commutes` 
+       c. install the calculator: `pip install FPLI-Minimum-Commutes` 
         - if this does not work try: `pip install FPLI-Minimum-Commutes==X` where X is the current version number, 
-        see https://pypi.org/project/FPLI-Minimum-Commutes/
-* To use in Stata; after completing the above, do the following in the Stata command line:
-    1. run `python search`
-        - the above should show the path to the created virtual environment
-    2. set the python executable to the created virtual environment with: `set python_exec <path_to_virtual_environment>`
-    - Refer to https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/.
-* As of Nov. 2020, there is a bug in the Numpy module installed with the FPLI-Minimum-Commutes package. 
-To fix run: `pip install numpy==1.19.3` on the command line. This bug is projected to be fixed in January 
-of 2021.
+          see https://pypi.org/project/FPLI-Minimum-Commutes/
+    4. On the Stata command line:
+       a. run `python search`
+        - the above should show the path to the created virtual environment2. set the python executable to the created virtual environment with: `set python_exec <path_to_virtual_environment>`
+       b. Refer to https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/.
+    5. Proceed as directed in usage section.      
 * Note: Stata implementation needs troubleshooting as at time of writing author does not have access to 
 Stata to test these implementation steps.
-* To install in PyCharm; complete steps 1 and 2 from the command line section above, then:
-    1. install PyCharm
-    2. open a new project, use the desired directory as the Location and the installed version of 
+* To use in PyCharm (python development environment); complete steps 1 and 2 from the command line section above, then:
+    3. install PyCharm, community edition will be fine.
+    4. open a new project, use the desired directory as the Location and the installed version of 
     Python (saved in C: above) as the Base Interpreter
-    3. in the PyCharm terminal (tab at bottom of PyCharm window) run `pip install FPLI-Minimum-Commutes`
+    5. in the Terminal (tab at bottom of PyCharm window, not the Python Console) run `pip install FPLI-Minimum-Commutes`
         - if this does not work try: `pip install FPLI-Minimum-Commutes==X` where X is the current 
         version number, see https://pypi.org/project/FPLI-Minimum-Commutes/
-    4. As of Nov. 2020, there is a bug in the Numpy module installed with the FPLI-Minimum-Commutes 
-    package. To fix run: `pip install numpy==1.19.3` in the python terminal. This bug is projected to 
-    be fixed in January of 2021.
-
+    6. Proceed as directed in usage section.
 
 ## Process
 Conceptually, the process of the function can be broken down into the following high-level steps.
@@ -117,25 +113,37 @@ than the maximum radius to consider (_max_radius_to_consider_) and store in the 
 ## Usage
 
 ### General Usage
-To use the module in Python:
-- import the package: `import FPLI-Minimum-Commutes`
-- for simplicity, import the module containing the calculator and rename for 
-brevity: `from FPLI-Minimum-Commutes import minimum_commute_calculator as mcc` 
-- call the calculator function with: `mcc.commute_calculator(<desired input parameters>)`, being sure to update all input 
-variables to the desired values
+To use the module in Pycharm:
+- create a file to work in by right clicking on the topmost directory in the project structure (directory tree in left 
+  of window) and select "New" then "File". Name the file as desired, using the .py extension (this will be the script 
+  you run, so 'main.py' would be appropriate, and hit enter.
+- at the top of the file import the package, type: `import FPLI-Minimum-Commutes`
+- next import the module containing the calculator and rename for brevity by typing: 
+  `from FPLI-Minimum-Commutes import minimum_commute_calculator as mcc` 
+- write a line to call the calculator function with:`mcc.commute_calculator(<desired input parameters>)`, 
+  being sure to update all input variables to the desired values.
+- to run the program, right click the tab where your file is open (i.e. the filename) at the top of the window, 
+  then select 'Debug' (recommended) or 'Run'
+  -the program will provide status updates as it runs as well as when it completes.
+
 
 To use the module in a Stata do file:
 - start a python block with `python:`
 - do the same the steps listed above for use in Python
 - end the python block with `end` 
 - Refer to https://www.stata.com/new-in-stata/python-integration/ for more details.
+* At the time of writing the author did not have access to Stata to full test these instructions, 
+  please update as needed.
 
 To avoid having to type the API key into the function repeatedly, place a config.py file in the same directory where 
-the function will be run. Inside this file, place only the following text: `distance_key = "<place_your_key_here>"` 
+the function will be run. Inside this file, write only the following text: `distance_key = "<place_your_key_here>"` 
 where <place_your_key_here> is replaced with your Google Distance Matrix API product key. Leave the quotation marks 
-around the key. Once this file is in place, the api_key parameter can be set by importing the config 
+around the key. Once this file is in place, the api_key parameter can be set in the main file by importing the config 
 file `import config` (do in the line after importing the minimim_commute_calculator module). Then in the 
-function input parameter list write: api_key=config.distance_key. 
+function input parameter list write: api_key=config.distance_key.
+
+Obtain API keys through a Google Developer account. Consult the Google Distance Matrix API pricing sheet to determine 
+the cost of the API calls. The Advanced features are used in this package, ensure to verify correct pricing. 
 
 ### Input Variables for minimum_commute_calculator.commute_calculator()
 The main function of the FPLI_Minimum_Commutes package is minimum_commute_calculator.commute_calculator(). The 

@@ -19,7 +19,7 @@ setuptools.setup(
         'requests',
         'pytz',
         'tzlocal',
-        'xlrd',
+        'openpyxl',
         'xlsxwriter'],
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -1,7 +1,7 @@
 import pandas
-import xlrd
-import xlsxwriter
 import requests
+import openpyxl
+import xlsxwriter
 import os
 
 
@@ -28,7 +28,7 @@ def download_data(input_csv=None):
     with open('response.txt', 'wb') as f:
         f.write(response.content)
     # convert the text file to an xlsx file
-    pandas.read_csv('response.txt', sep='\t').to_excel('MSID_data.xlsx', index=False)
+    pandas.read_csv('response.txt', sep='\t').to_excel('MSID_data.xlsx', index=False, engine='xlsxwriter')
     # delete the unneeded file
     if os.path.exists('response.txt'):
         os.remove('response.txt')
@@ -50,7 +50,7 @@ def preprocess_fl_msid_data(data_excel_file=None, input_csv=None):
     full_data = pandas.read_excel(data_excel_file)
 
     # select only the columns of interest from the data frame
-    full_data = full_data[['TYPE', 'ACTIVITY_CODE', 'DISTRICT_NAME', 'SCHOOL_NAME_LONG', 'GRADE_CODE',
+    full_data = full_data[['TYPE', 'ACTIVITY_CODE', 'DISTRICT_NAME', 'DISTRICT', 'SCHOOL_NAME_LONG', 'GRADE_CODE',
                            'PHYSICAL_ADDRESS', 'PHYSICAL_CITY', 'PHYSICAL_STATE', 'PHYSICAL_ZIP',
                            'SCHL_FUNC_SETTING', 'LATITUDE', 'LONGITUDE', 'CHARTER_SCHL_STAT']]
 
@@ -62,6 +62,12 @@ def preprocess_fl_msid_data(data_excel_file=None, input_csv=None):
     full_data = full_data[full_data['TYPE'].isin([1, 2, 3, 4])]
     # remove all specialized schools (adult, DJJ, home, virtual, etc), keep only N/A
     full_data = full_data[full_data.SCHL_FUNC_SETTING == 'Z']
+    # remove any school that isn't in a standard district
+    # first create array of integers 1-67 (corresponding to the desired numbers)
+    district_ids = []
+    for i in range(1, 68):
+        district_ids.append(i)
+    full_data = full_data[full_data['DISTRICT'].isin(district_ids)]
 
     # add a column to store the grade level
     full_data['level'] = 'bunny123'  # used weird string for easy searching to make sure every line got replaced [works]

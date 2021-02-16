@@ -3,7 +3,7 @@ import config  # local API key
 
 
 def main():
-    minimum_commute_calculator.commute_calculator(download_msid=True)
+    minimum_commute_calculator.commute_calculator(distance_pairs_determination=False)
 
 
 if __name__ == '__main__':
